@@ -4,8 +4,8 @@
  * Class 'Symbol' as a container for one symbol.
  *
  * Author/copyright:  Duncan A. Buell.  All rights reserved.
- * Used with permission and modified by: Jane Random Hacker
- * Date: 17 August 2018
+ * Used with permission and modified by: Anthony M. Castellano
+ * Date: 16 November 2018
 **/
 
 /******************************************************************************
@@ -18,7 +18,8 @@ Symbol::Symbol() {
  * Constructor
 **/
 Symbol::Symbol(string text, int programcounter) {
-  code goes here
+  text_ = text;
+  location_ = programcounter;
 }
 
 /******************************************************************************
@@ -74,7 +75,31 @@ void Symbol::SetMultiply() {
 bool Symbol::CheckInvalid() const {
   bool returnvalue = false;  // false means no, not invalid
 
-  code goes here
+  // Confirm symbol is one to three characters long
+  if (text_.length() < 1 || text_.length() > 3) {
+    returnvalue = true;
+  }
+
+  // Check if first character is alpha character
+  char testchar = text_.at(0);
+  if (!isalpha(testchar)) {
+    returnvalue = true;
+  }
+
+  // Check if all characters are alphanumeric
+  for (int i = 0; i < text_.length(); ++i) {
+    char testchar = text_.at(i);
+    if (!isalnum(testchar) && testchar != ' ') {
+      returnvalue = true;
+    }
+  }
+
+  // Check if symbol contains space in the middle
+  for (int i = 1; i < text_.length()-1; ++i) {
+    if (text_.at(i) == ' ') {
+      returnvalue = true;
+    }
+  }
 
   return returnvalue;
 }
