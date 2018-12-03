@@ -13,11 +13,12 @@
 **/
 CodeLine::CodeLine() {
 }
-
-//CodeLine::CodeLine(Globals globals) {
-//  globals_ = globals;
-//}
-
+/***************************************************************************
+ * Constructor
+**/
+CodeLine::CodeLine(int linecounter, int pc, string assemblycode) {
+  Init(linecounter, pc, assemblycode);
+}
 /***************************************************************************
  * Destructor
 **/
@@ -33,8 +34,10 @@ CodeLine::~CodeLine() {
 **/
 string CodeLine::GetAddr() const {
   string returnvalue;
-
-  code goes here
+  if (addr_.compare("*") == 0) {
+    returnvalue = "indirect";
+  } else {
+    returnvalue = "direct";
   }
   return returnvalue;
 }
@@ -92,6 +95,10 @@ string CodeLine::GetSymOperand() const {
  * Boolean indicator of the presence of a label.
 **/
 bool CodeLine::HasLabel() const {
+  something = true;
+  if (IsAllComment() == true || label_.at(0) == ' ' {
+    something = false;
+  }
   return something
 }
 
@@ -99,6 +106,10 @@ bool CodeLine::HasLabel() const {
  * Boolean indicator of the presence of a symbolic operand.
 **/
 bool CodeLine::HasSymOperand() const {
+  something = true;
+  if (IsAllComment() == true || label_.at(0) == ' ' {
+    something = false;
+  }
   return something
 }
 
@@ -113,6 +124,33 @@ bool CodeLine::IsAllComment() const {
  * General functions.
 **/
 
+/***************************************************************************
+ * Initialization Function
+ * Determines if input in Construcor is a comment or instruction and then 
+ * Breaks down the instruction into parts as outlined in PDF
+**/
+void Init(int linecounter, int pc, string assemblycode) {
+  // First check to see whether the code is all comment or instruction
+  string comment_indicator = assemblycode.substr(0, 1);
+  if (comment_indicator.compare("*") == 0) {
+    SetCommentsOnly(linecounter, assemblycode);
+  } else {
+    // The following lines of code break up the input assembly code into its
+    // corresponding parts as outlined in the homework pdf if the code isn't
+    // a comment.
+    std::string label = assemblycode.substr(0, 3);
+    std::string mnemonic = assemblycode.substr(4, 3);
+    std::string addr = assemblycode.substr(8, 1);
+    std::string symoperand = assemblycode.substr(10, 3);
+    std::string hexoperand = assemblycode.substr(14, 4);
+    // The comment substring should run from the begining of the comment at
+    // spot 20 until it ends. Thus the length of the whole line minus 19
+    // gives the value of spaces remaining from the 20th position.
+    std::string comments = assemblycode.substr(20, assemblycode.length-19);
+    SetCodeLine(linecounter, pc, label, mnemonic, addr, symoperand,
+      hexoperand, comments);
+  }
+}
 /***************************************************************************
  * Function 'SetCodeLine'.
  * Sets the values for a line of code that isn't all comments.
@@ -151,6 +189,8 @@ void CodeLine::SetCodeLine(int linecounter, int pc, string label,
  *   line - the code line that is taken to be all comments
 **/
 void CodeLine::SetCommentsOnly(int linecounter, string line) {
+  comments_ = line;
+  is_all_comment = true;
 }
 
 /***************************************************************************
