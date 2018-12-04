@@ -17,7 +17,27 @@ CodeLine::CodeLine() {
  * Constructor
 **/
 CodeLine::CodeLine(int linecounter, int pc, string assemblycode) {
-  Init(linecounter, pc, assemblycode);
+  // First check to see whether the code is all comment or instruction
+  string comment_indicator = assemblycode.substr(0, 1);
+  if (comment_indicator.compare("*") == 0) {
+    SetCommentsOnly(linecounter, assemblycode);
+  } else {
+    // The following lines of code break up the input assembly code into its
+    // corresponding parts as outlined in the homework pdf if the code isn't
+    // a comment.
+    std::string label = assemblycode.substr(0, 3);
+    std::string mnemonic = assemblycode.substr(4, 3);
+    std::string addr = assemblycode.substr(8, 1);
+    std::string symoperand = assemblycode.substr(10, 3);
+    std::string hexoperand = assemblycode.substr(14, 4);
+    // The comment substring should run from the begining of the comment at
+    // spot 20 until it ends. Thus the length of the whole line minus 19
+    // gives the value of spaces remaining from the 20th position.
+    int length_of_comment = assemblycode.length()-19;
+    std::string comments = assemblycode.substr(20, length_of_comment);
+    SetCodeLine(linecounter, pc, label, mnemonic, addr, symoperand,
+      hexoperand, comments);
+  }
 }
 /***************************************************************************
  * Destructor
@@ -125,33 +145,6 @@ bool CodeLine::IsAllComment() const {
 **/
 
 /***************************************************************************
- * Initialization Function
- * Determines if input in Construcor is a comment or instruction and then 
- * Breaks down the instruction into parts as outlined in PDF
-**/
-void Init(int linecounter, int pc, string assemblycode) {
-  // First check to see whether the code is all comment or instruction
-  string comment_indicator = assemblycode.substr(0, 1);
-  if (comment_indicator.compare("*") == 0) {
-    SetCommentsOnly(linecounter, assemblycode);
-  } else {
-    // The following lines of code break up the input assembly code into its
-    // corresponding parts as outlined in the homework pdf if the code isn't
-    // a comment.
-    std::string label = assemblycode.substr(0, 3);
-    std::string mnemonic = assemblycode.substr(4, 3);
-    std::string addr = assemblycode.substr(8, 1);
-    std::string symoperand = assemblycode.substr(10, 3);
-    std::string hexoperand = assemblycode.substr(14, 4);
-    // The comment substring should run from the begining of the comment at
-    // spot 20 until it ends. Thus the length of the whole line minus 19
-    // gives the value of spaces remaining from the 20th position.
-    std::string comments = assemblycode.substr(20, assemblycode.length-19);
-    SetCodeLine(linecounter, pc, label, mnemonic, addr, symoperand,
-      hexoperand, comments);
-  }
-}
-/***************************************************************************
  * Function 'SetCodeLine'.
  * Sets the values for a line of code that isn't all comments.
  *
@@ -167,7 +160,7 @@ void Init(int linecounter, int pc, string assemblycode) {
 **/
 void CodeLine::SetCodeLine(int linecounter, int pc, string label,
                            string mnemonic, string addr, string symoperand,
-                           string hexoperand, string comments, string code) {
+                           string hexoperand, string comments) {
   linecounter_ = linecounter;
   pc_ = pc;
   label_ = label;
@@ -176,7 +169,6 @@ void CodeLine::SetCodeLine(int linecounter, int pc, string label,
   symoperand_ = symoperand;
   hex_ = Hex(hexoperand);
   comments_ = comments;
-  code_ = code;
 
   is_all_comment_ = false;
 }
@@ -221,6 +213,9 @@ void CodeLine::SetMachineCode(string code) {
  *   what - the value to set as the PC
 **/
 void CodeLine::SetPC(int what) {
+  if ( what >= 0 && what < 4096) {
+    pc_= what;
+  }
 }
 
 /***************************************************************************

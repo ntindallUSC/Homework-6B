@@ -54,6 +54,7 @@ class Assembler {
   int pc_in_assembler_;
   int maxpc_;
   vector<CodeLine> codelines_;
+  vector<int> duplicates_;
   map<int, string> machinecode_;
   map<string, Symbol> symboltable_;
   map<string, string> opcodes_;

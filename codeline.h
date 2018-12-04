@@ -27,6 +27,7 @@ using std::string;
 class CodeLine {
  public:
   CodeLine();
+  CodeLine(int linecounter, int pc, string assemblycode);
   virtual ~CodeLine();
 
   string GetAddr() const;
@@ -59,7 +60,6 @@ class CodeLine {
   int pc_;
 
   string addr_;
-  string code_;
   string comments_;
   string error_messages_;
   string label_;
