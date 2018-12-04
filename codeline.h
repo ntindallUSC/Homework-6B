@@ -27,6 +27,7 @@ using std::string;
 class CodeLine {
  public:
   CodeLine();
+  CodeLine(int linecounter, int pc, string assemblycode);
   virtual ~CodeLine();
 
   string GetAddr() const;
@@ -45,7 +46,7 @@ class CodeLine {
   bool IsAllComment() const;
   void SetCodeLine(int linecounter, int pc, string label, string mnemonic,
                    string addr, string symoperand, string hexoperand,
-                   string comments, string code);
+                   string comments);
   void SetCommentsOnly(int linecounter, string line);
   void SetErrorMessages(string messages);
   void SetMachineCode(string code);
@@ -59,7 +60,6 @@ class CodeLine {
   int pc_;
 
   string addr_;
-  string code_;
   string comments_;
   string error_messages_;
   string label_;
