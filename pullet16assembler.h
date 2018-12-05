@@ -110,6 +110,8 @@ class Assembler {
 
   vector<CodeLine> codelines_;
 
+  vector<string> machine_code_lines_;
+
   map<int, string> machinecode_;
 
   map<string, Symbol> symboltable_;

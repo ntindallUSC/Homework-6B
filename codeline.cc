@@ -27,15 +27,19 @@ CodeLine::CodeLine(int linecounter, int pc, string assemblycode) {
     // a comment.
     std::string label = assemblycode.substr(0, 3);
     std::string mnemonic = assemblycode.substr(4, 3);
-    std::string addr = assemblycode.substr(8, 1);
-    std::string symoperand = assemblycode.substr(10, 3);
-    std::string hexoperand = assemblycode.substr(14, 4);
-    // The comment substring should run from the begining of the comment at
-    // spot 20 until it ends. Thus the length of the whole line minus 19
-    // gives the value of spaces remaining from the 20th position.
-    int length_of_comment = assemblycode.length()-19;
-    std::string comments = assemblycode.substr(20, length_of_comment);
-    SetCodeLine(linecounter, pc, label, mnemonic, addr, symoperand, hexoperand, comments);
+    if (assemblycode.length() > 7) {
+      std::string addr = assemblycode.substr(8, 1);
+      std::string symoperand = assemblycode.substr(10, 3);
+      std::string hexoperand = assemblycode.substr(14, 4);
+      // The comment substring should run from the begining of the comment at
+      // spot 20 until it ends. Thus the length of the whole line minus 19
+      // gives the value of spaces remaining from the 20th position.
+      int length_of_comment = assemblycode.length()-19;
+      std::string comments = assemblycode.substr(20, length_of_comment);
+      SetCodeLine(linecounter, pc, label, mnemonic, addr, symoperand, hexoperand, comments);
+    } else {
+    SetCodeLine(linecounter, pc, label, mnemonic, "dummyaddr", "dummysym", "dummyhex", "dummycomments");
+    }
   }
 }
 /***************************************************************************
@@ -108,7 +112,7 @@ string CodeLine::GetSymOperand() const {
 **/
 bool CodeLine::HasLabel() const {
   bool something = true;
-  if (IsAllComment() == true || label_.at(0) == ' ') {
+  if (label_ == "nolabel") {
     something = false;
   }
   return something;
@@ -173,8 +177,9 @@ void CodeLine::SetCodeLine(int linecounter, int pc, string label,
  *   line - the code line that is taken to be all comments
 **/
 void CodeLine::SetCommentsOnly(int linecounter, string line) {
-  string comments_ = line;
+  comments_ = line;
   bool is_all_comment = true;
+  label_ = "nolabel";
 }
 
 /***************************************************************************
