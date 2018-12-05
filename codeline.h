@@ -39,6 +39,7 @@ class CodeLine {
   string GetMnemonic() const;
   string GetPC() const;
   string GetSymOperand() const;
+  string GetMachineCode() const;
 
   bool HasLabel() const;
   bool HasSymOperand() const;
@@ -65,6 +66,7 @@ class CodeLine {
   string label_;
   string mnemonic_;
   string symoperand_;
+  string code_;
 
   Hex hex_;
 };

@@ -20,6 +20,7 @@ Symbol::Symbol() {
 Symbol::Symbol(string text, int programcounter) {
   text_ = text;
   location_ = programcounter;
+  is_multiply_ = false;
 }
 
 /******************************************************************************

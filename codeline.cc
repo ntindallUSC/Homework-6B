@@ -17,9 +17,10 @@ CodeLine::CodeLine() {
  * Constructor
 **/
 CodeLine::CodeLine(int linecounter, int pc, string assemblycode) {
-  // First check to see whether the code is all comment or instruction
+  cout << "IN CODELINE CONSTRUCTOR: " << assemblycode << endl;
+ // First check to see whether the code is all comment or instruction
   string comment_indicator = assemblycode.substr(0, 1);
-  if (comment_indicator.compare("*") == 0) {
+  if (comment_indicator.compare("*") == 0 || assemblycode.size() == 1) {
     SetCommentsOnly(linecounter, assemblycode);
   } else {
     // The following lines of code break up the input assembly code into its
@@ -27,7 +28,7 @@ CodeLine::CodeLine(int linecounter, int pc, string assemblycode) {
     // a comment.
     std::string label = assemblycode.substr(0, 3);
     std::string mnemonic = assemblycode.substr(4, 3);
-    if (assemblycode.length() > 7) {
+     if (assemblycode.length() > 7) {
       std::string addr = assemblycode.substr(8, 1);
       std::string symoperand = assemblycode.substr(10, 3);
       std::string hexoperand = assemblycode.substr(14, 4);
@@ -38,7 +39,8 @@ CodeLine::CodeLine(int linecounter, int pc, string assemblycode) {
       std::string comments = assemblycode.substr(20, length_of_comment);
       SetCodeLine(linecounter, pc, label, mnemonic, addr, symoperand, hexoperand, comments);
     } else {
-    SetCodeLine(linecounter, pc, label, mnemonic, "dummyaddr", "dummysym", "dummyhex", "dummycomments");
+    SetCodeLine(linecounter, pc, label, mnemonic, "nulladdr", "nullsymoperand",
+    "nullhex", "nullcomments");
     }
   }
 }
@@ -70,6 +72,13 @@ string CodeLine::GetAddr() const {
 **/
 string CodeLine::GetComments() const {
   return comments_;
+}
+
+/***************************************************************************
+ * Accessor for the 'code_'
+**/
+string CodeLine::GetMachineCode() const {
+  return code_;
 }
 
 /***************************************************************************
@@ -112,7 +121,7 @@ string CodeLine::GetSymOperand() const {
 **/
 bool CodeLine::HasLabel() const {
   bool something = true;
-  if (label_ == "nolabel") {
+  if (label_ == "nulllabel") {
     something = false;
   }
   return something;
@@ -123,7 +132,7 @@ bool CodeLine::HasLabel() const {
 **/
 bool CodeLine::HasSymOperand() const {
   bool something = true;
-  if (IsAllComment() == true || label_.at(0) == ' ') {
+  if ( symoperand_ == "nullsymoperand") {
     something = false;
   }
   return something;
@@ -159,13 +168,21 @@ void CodeLine::SetCodeLine(int linecounter, int pc, string label,
                            string hexoperand, string comments) {
   linecounter_ = linecounter;
   pc_ = pc;
-  label_ = label;
+  if (label == "   ") {
+    label_ = "nulllabel";
+  } else {
+    label_ = label;
+  }
   mnemonic_ = mnemonic;
   addr_ = addr;
-  symoperand_ = symoperand;
+  if (symoperand == "   ") {
+    symoperand_ = "nullsymoperand";
+  } else {
+    symoperand_ = symoperand;
+  }
   hex_ = Hex(hexoperand);
   comments_ = comments;
-
+  code_ = "nullcode";
   is_all_comment_ = false;
 }
 
@@ -178,8 +195,15 @@ void CodeLine::SetCodeLine(int linecounter, int pc, string label,
 **/
 void CodeLine::SetCommentsOnly(int linecounter, string line) {
   comments_ = line;
-  bool is_all_comment = true;
-  label_ = "nolabel";
+  bool is_all_comment_ = true;
+  label_ = "nulllabel";
+  pc_ = -1;
+  linecounter_ = linecounter;
+  mnemonic_ = "nullmnemonic";
+  addr_ = "nulladdr_";
+  symoperand_ = "nullsymoperand";
+  hex_ = Hex("");
+  code_ = "nullcode";
 }
 
 /***************************************************************************
@@ -190,6 +214,7 @@ void CodeLine::SetCommentsOnly(int linecounter, string line) {
  *   messages - the string of messages
 **/
 void CodeLine::SetErrorMessages(string messages) {
+  comments_ = comments_ + " " + messages;
 }
 
 /***************************************************************************
@@ -200,6 +225,7 @@ void CodeLine::SetErrorMessages(string messages) {
  *   code - the code to set
 **/
 void CodeLine::SetMachineCode(string code) {
+  code_ = code;
 }
 
 /***************************************************************************
@@ -210,7 +236,7 @@ void CodeLine::SetMachineCode(string code) {
  *   what - the value to set as the PC
 **/
 void CodeLine::SetPC(int what) {
-  if ( what >= 0 && what < 4096) {
+  if ( what >= 0 && what <= 4096) {
     pc_= what;
   }
 }
@@ -246,7 +272,7 @@ string CodeLine::ToString() const {
     s += " " + Utils::Format(mnemonic_, 6);
   }
 
-  if (addr_ == "*") {
+  if (addr_ == "indirect") {
     s += " " + Utils::Format("*", 1);
   } else {
     s += " " + Utils::Format(" ", 1);

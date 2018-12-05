@@ -118,32 +118,32 @@ void Assembler::PassOne(Scanner& in_scanner) {
 #ifdef EBUG
   Utils::log_stream << "enter PassOne" << endl;
 #endif
-int line_counter = 0; // stores a line location from the source file
-pc_in_assembler_ = 0;  // our place in program memory
-string assembly_code = "";  // a line of code from the source file
-string symbol_text = "";  // stores a symbol operand
-string nextLine = in_scanner.NextLine();
-while(nextLine != "") {
-  // Reading in the next line of code
-  //assembly_code = in_scanner.NextLine();  // reading in the next line
-  assembly_code = nextLine;
-  CodeLine new_line = CodeLine(line_counter, pc_in_assembler_, assembly_code);
-  ++line_counter;  // moving to the next line
-   codelines_.push_back(new_line);  // adding the code line to program memory
-   cout << "ASSEMBLY: " <<  assembly_code << endl;
+  int line_counter = 0; // stores a line location from the source file
+  pc_in_assembler_ = 0;  // our place in program memory
+  string assembly_code = "";  // a line of code from the source file
+  string symbol_text = "";  // stores a label
+  string nextLine = in_scanner.NextLine();
+  while(nextLine != "") {
+    // Reading in the next line of code
+    assembly_code = nextLine;
+    CodeLine new_line = CodeLine(line_counter, pc_in_assembler_, assembly_code);
+    ++line_counter;  // moving to the next line
+    codelines_.push_back(new_line);  // adding the code line to program memory
+    cout << "ASSEMBLY: " << assembly_code << endl;
 
-   if (new_line.IsAllComment()) {
-
-   } else {
-    // Adding to the symbol table
-    if(new_line.HasLabel()) {
-      symbol_text = new_line.GetSymOperand();
-      UpdateSymbolTable(pc_in_assembler_, symbol_text);
-    }
-    ++pc_in_assembler_;  // moving to the next location in memory
- }
- nextLine = in_scanner.NextLine();
-}
+      if (new_line.IsAllComment()) {
+      
+      } else {
+        // Adding to the symbol table
+        if(new_line.HasLabel()) {
+          symbol_text = new_line.GetLabel();
+          UpdateSymbolTable(pc_in_assembler_, symbol_text);
+        }
+        ++pc_in_assembler_;  // moving to the next location in memory
+      }
+    nextLine = in_scanner.NextLine();
+  }
+PrintSymbolTable();
 #ifdef EBUG
   Utils::log_stream << "leave PassOne" << endl;
 #endif
@@ -157,39 +157,48 @@ void Assembler::PassTwo() {
 #ifdef EBUG
   Utils::log_stream << "enter PassTwo" << endl;
 #endif
+  cout << "Entering Second Pass" << endl; 
   for (int i = 0; i < codelines_.size(); i++) {
     string machine_code;
-    // First 3 bits
-    string mnemonic = codelines_.at(i).GetMnemonic();
-    string mnemonic_opcode = opcodes_.at(mnemonic);
-    // If opcode is RD/WRT/STP
-    if (mnemonic_opcode == "111") {
-      if (mnemonic == "RD ") {
-        machine_code = "1110000000000001";
-      } else if (mnemonic == "WRT") {
-        machine_code = "1110000000000011";
-      } else {
-        machine_code = "1110000000000010";
+    if (codelines_.at(i).IsAllComment() == false) {
+      // First 3 bits
+      cout << "CODELINE : " << codelines_.at(i).ToString() << endl;
+      string mnemonic = codelines_.at(i).GetMnemonic();
+      if (mnemonic != "nullmnemonic") {
+        cout << "MNEMONIC: " << mnemonic << endl;
+        string mnemonic_opcode = opcodes_.at(mnemonic);
+        cout << "OPCODE FROM MAP: " << endl;
+        // If opcode is RD/WRT/STP
+        if (mnemonic_opcode == "111") {
+          if (mnemonic == "RD ") {
+            machine_code = "1110000000000001";
+          } else if (mnemonic == "WRT") {
+            machine_code = "1110000000000011";
+          } else {
+            machine_code = "1110000000000010";
+          }
+        } else {
+          machine_code += mnemonic_opcode;
+          // 4th Bit
+          string addr = codelines_.at(i).GetAddr();
+          if (addr == "indirect") {
+          machine_code += "1";
+          } else if(addr == "direct") {
+            machine_code += "0";
+          }
+          // Last 12 bits
+          string symbol_text = codelines_.at(i).GetSymOperand();
+          int symbol_loc = symboltable_.at(symbol_text).GetLocation();
+          string symbol_bit_string = DABnamespace::DecToBitString(symbol_loc, 12);
+          machine_code += symbol_bit_string;
+          // Push onto vector
+          machine_code_lines_.push_back(machine_code);
+          cout << machine_code << endl;
+        }
       }
-    } else {
-      machine_code += mnemonic_opcode;
-      // 4th Bit
-      string addr = codelines_.at(i).GetAddr();
-      if (addr == "indirect") {
-        machine_code += "1";
-      } else if(addr == "direct") {
-        machine_code += "0";
-      }
-      // Last 12 bits
-      string symbol_text = codelines_.at(i).GetSymOperand();
-      int symbol_loc = symboltable_.at(symbol_text).GetLocation();
-      string symbol_bit_string = DABnamespace::DecToBitString(symbol_loc, 12);
-      machine_code += symbol_bit_string;
-      // Push onto vector
-      machine_code_lines_.push_back(machine_code);
-      cout << machine_code << endl;
     }
   }
+  cout << "EXITING SECOND PASS" << endl;
 #ifdef EBUG
   Utils::log_stream << "leave PassTwo" << endl;
 #endif
@@ -246,7 +255,7 @@ void Assembler::PrintSymbolTable() {
   Utils::log_stream << "enter PrintSymbolTable" << endl;
 #endif
   for (auto a = symboltable_.begin(); a != symboltable_.end(); a++) {
-    Utils::log_stream << " Symbol" << a->second.ToString() << endl;
+    cout << " Symbol " << a->second.ToString() << endl;
   }
 #ifdef EBUG
   Utils::log_stream << "leave PrintSymbolTable" << endl;
@@ -286,7 +295,8 @@ void Assembler::UpdateSymbolTable(int pc, string symboltext) {
 Symbol new_symbol = Symbol(symboltext, pc);  // creating the new symbol
  // Checking to see if there is a duplicate symbol 
 if (symboltable_.count(symboltext) == 0) {
-	symboltable_.insert( std::pair<string, Symbol>(symboltext, new_symbol));  // found no duplicates
+	symboltable_.insert( std::pair<string, Symbol>(symboltext, new_symbol));
+  // found no duplicates
 } else {
 	// found a duplicate, so store the pc to keep track of when the duplicate
 	// appeared during execution
