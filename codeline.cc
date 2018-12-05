@@ -236,7 +236,7 @@ void CodeLine::SetMachineCode(string code) {
  *   what - the value to set as the PC
 **/
 void CodeLine::SetPC(int what) {
-  if ( what >= 0 && what <= 4096) {
+  if ( what >= 0 && what < 4096) {
     pc_= what;
   }
 }

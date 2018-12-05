@@ -177,6 +177,21 @@ void Assembler::PassTwo() {
           } else {
             machine_code = "1110000000000010";
           }
+        } else if (mnemonic == "HEX"){
+          cout << "I'M IN tHE HEX IF STATEMENT" << endl;
+            int hex = codelines_.at(i).GetHexObject().GetValue();
+            string bitstring_hex = DABnamespace::DecToBitString(hex, 16);
+            machine_code = bitstring_hex;
+            machine_code_lines_.push_back(machine_code);
+        } else if (mnemonic == "ORG") {
+            SetNewPC(codelines_.at(i + 1));  // ORG the next line
+        } else if (mnemonic == "END") {
+            i = codelines_.size();
+        } else if (mnemonic == "DS") {
+            int hex = codelines_.at(i).GetHexObject().GetValue();
+            for(int i = 0; i < hex; i++) {
+              machine_code_lines_.push_back(kDummyCodeA);
+            }
         } else {
           machine_code += mnemonic_opcode;
           // 4th Bit
@@ -275,6 +290,9 @@ void Assembler::SetNewPC(CodeLine codeline) {
 #ifdef EBUG
   Utils::log_stream << "enter SetNewPC" << endl;
 #endif
+
+int hex = codeline.GetHexObject().GetValue();
+codeline.SetPC(hex);
 
 #ifdef EBUG
   Utils::log_stream << "leave SetNewPC" << endl;
