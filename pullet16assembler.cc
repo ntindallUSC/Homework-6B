@@ -13,6 +13,7 @@
  * Constructor
 **/
 Assembler::Assembler() {
+
 }
 
 /***************************************************************************
@@ -116,10 +117,10 @@ void Assembler::PassOne(Scanner& in_scanner) {
 #ifdef EBUG
   Utils::log_stream << "enter PassOne" << endl;
 #endif
-  int line_counter = 0;  // stores a line location from the source file
+  int line_counter = 0; // stores a line location from the source file
   pc_in_assembler_ = 0;  // our place in program memory
-  string assembly_code = "";  // a line of code from the source file
-  string symbol_text = "";  // stores a label
+  string assembly_code = ""; // a line of code from the source file
+  string symbol_text = ""; // stores a label
   string nextLine = in_scanner.NextLine();
   int i = 0;
   while (nextLine != "") {
@@ -131,6 +132,7 @@ void Assembler::PassOne(Scanner& in_scanner) {
 
       if (new_line.IsAllComment() ||
       codelines_.at(i).GetMnemonic() == "nullmnemonic") {
+
       } else {
         // Adding to the symbol table
         if (new_line.HasLabel()) {
@@ -178,11 +180,8 @@ void Assembler::PassTwo() {
             codelines_.at(i).SetMachineCode(machine_code);
           }
         } else if (mnemonic == "HEX") {
-            cout << "I'M HERE!!!! AT " << i << endl;
             int hex = codelines_.at(i).GetHexObject().GetValue();
-            cout << "HEX VALUE: " << hex << endl;
             string bitstring_hex = DABnamespace::DecToBitString(hex, 16);
-            cout << "HEX BITSTRING: " << bitstring_hex << endl;
             machine_code = bitstring_hex;
             machine_code_lines_.push_back(machine_code);
             codelines_.at(i).SetMachineCode(machine_code);
@@ -196,7 +195,7 @@ void Assembler::PassTwo() {
             machine_code_lines_.push_back(machine_code);
             codelines_.at(i).SetMachineCode(machine_code);
             i = codelines_.size();
-        } else if (mnemonic == "DS") {
+        } else if (mnemonic == "DS ") {
             machine_code = kDummyCodeC;
             codelines_.at(i).SetMachineCode(machine_code);
             machine_code_lines_.push_back(machine_code);
@@ -216,8 +215,8 @@ void Assembler::PassTwo() {
           // Last 12 bits
           string symbol_text = codelines_.at(i).GetSymOperand();
           int symbol_loc = symboltable_.at(symbol_text).GetLocation();
-          string symbol_bit_string =
-          DABnamespace::DecToBitString(symbol_loc, 12);
+          string symbol_bit_string = 
+            DABnamespace::DecToBitString(symbol_loc, 12);
           machine_code += symbol_bit_string;
           // Push onto vector
           machine_code_lines_.push_back(machine_code);
@@ -340,12 +339,12 @@ void Assembler::UpdateSymbolTable(int pc, string symboltext) {
   Utils::log_stream << "enter UpdateSymbolTable" << endl;
 #endif
 Symbol new_symbol = Symbol(symboltext, pc);  // creating the new symbol
-// Checking to see if there is a duplicate symbol
+// Checking to see if there is a duplicate symbol 
 if (symboltable_.count(symboltext) == 0) {
-  symboltable_.insert(std::pair<string, Symbol>(symboltext, new_symbol));
+	symboltable_.insert( std::pair<string, Symbol>(symboltext, new_symbol));
   // found no duplicates
 } else {
-  // found a duplicate
+	// found a duplicate
   // find the duplicate in memory and add a comment
   for (int i = 0; i < 4096; ++i) {
     if (codelines_.at(i).GetPC() == pc) {

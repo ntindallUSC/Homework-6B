@@ -27,7 +27,7 @@ CodeLine::CodeLine(int linecounter, int pc, string assemblycode) {
     // a comment.
     std::string label = assemblycode.substr(0, 3);
     std::string mnemonic = assemblycode.substr(4, 3);
-     if (assemblycode.length() > 7) {
+     if (assemblycode.length() > 20) {
       std::string addr = assemblycode.substr(8, 1);
       std::string symoperand = assemblycode.substr(10, 3);
       std::string hexoperand = assemblycode.substr(14, 5);
@@ -37,9 +37,15 @@ CodeLine::CodeLine(int linecounter, int pc, string assemblycode) {
       int length_of_comment = assemblycode.length()-19;
       std::string comments = assemblycode.substr(20, length_of_comment);
       SetCodeLine(linecounter, pc, label, mnemonic, addr, symoperand, hexoperand, comments);
+    } else if (assemblycode.length() > 7 && assemblycode.length() < 20) {
+      std::string addr = assemblycode.substr(8,1);
+      std::string symoperand = assemblycode.substr(10, 3);
+      std::string hexoperand = assemblycode.substr(14, 5);
+      SetCodeLine(linecounter, pc, label, mnemonic, addr, symoperand, 
+                  hexoperand, "nullcomments");
     } else {
     SetCodeLine(linecounter, pc, label, mnemonic, "nulladdr", "nullsymoperand",
-    "nullhex", "nullcomments");
+    "     ", "nullcomments");
     }
   }
 }
@@ -263,10 +269,10 @@ string CodeLine::ToString() const {
   s += Utils::Format(linecounter_, 5) + " ";
   if ( pc_ < 0 ) {
     s += Utils::Format("    ", 5) + " ";
-    s += Utils::Format(" " , 12) + " ";
+   // s += Utils::Format(" " , 12) + " ";
   } else {
     s += Utils::Format(pc_, 4) + "  ";
-    s += DABnamespace::DecToBitString(pc_, 12) + " ";
+    //s += DABnamespace::DecToBitString(pc_, 12) + " ";
   }
 
   if (code_ == "nullcode") {
@@ -302,11 +308,8 @@ string CodeLine::ToString() const {
     s += " " + Utils::Format(symoperand_, 3);
   }
 
-  if (hex_.IsNull()) {
-    s += " " + Utils::Format(".....", 5);
-  } else {
-    s += " " + hex_.ToString();
-  }
+  s += " " + hex_.ToString();
+  
 
   if (comments_ != "nullcomments") {
     if (is_all_comment_) {
