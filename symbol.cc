@@ -4,7 +4,7 @@
  * Class 'Symbol' as a container for one symbol.
  *
  * Author/copyright:  Duncan A. Buell.  All rights reserved.
- * Used with permission and modified by: Anthony M. Castellano
+ * Used with permission and modified by: Group 6
  * Date: 16 November 2018
 **/
 

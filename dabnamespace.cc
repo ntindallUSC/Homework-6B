@@ -5,7 +5,7 @@
  * functions.
  *
  * Author/copyright:  Duncan A. Buell.  All rights reserved.
- * Used with permission and modified by: Jane Random Hacker
+ * Used with permission and modified by: Group 6
  * Date: 21 September 2018
  *
  * Documentation for the functions is in the header for those
@@ -96,4 +96,3 @@ string GetMnemonicFromBits(string codebits) {
 **/
 
 }  // namespace DABnamespace
-
