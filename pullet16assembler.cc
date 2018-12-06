@@ -13,7 +13,6 @@
  * Constructor
 **/
 Assembler::Assembler() {
-
 }
 
 /***************************************************************************
@@ -54,10 +53,8 @@ void Assembler::Assemble(Scanner& in_scanner, string binary_filename,
   PassTwo();
   //////////////////////////////////////////////////////////////////////////
   // Dump the results.
-  //PrintSymbolTable();
-  for (int i = 0; i < machine_code_lines_.size(); ++i) {
-    cout << machine_code_lines_.at(i) << endl;
-  }
+  // PrintSymbolTable();
+  PrintMachineCode(binary_filename, out_stream);
 #ifdef EBUG
   Utils::log_stream << "leave Assemble" << endl;
 #endif
@@ -119,25 +116,24 @@ void Assembler::PassOne(Scanner& in_scanner) {
 #ifdef EBUG
   Utils::log_stream << "enter PassOne" << endl;
 #endif
-  int line_counter = 0; // stores a line location from the source file
+  int line_counter = 0;  // stores a line location from the source file
   pc_in_assembler_ = 0;  // our place in program memory
   string assembly_code = "";  // a line of code from the source file
   string symbol_text = "";  // stores a label
   string nextLine = in_scanner.NextLine();
   int i = 0;
-  while(nextLine != "") {
+  while (nextLine != "") {
     // Reading in the next line of code
     assembly_code = nextLine;
     CodeLine new_line = CodeLine(line_counter, pc_in_assembler_, assembly_code);
     ++line_counter;  // moving to the next line
     codelines_.push_back(new_line);  // adding the code line to program memory
 
-      if (new_line.IsAllComment() || 
+      if (new_line.IsAllComment() ||
       codelines_.at(i).GetMnemonic() == "nullmnemonic") {
-
       } else {
         // Adding to the symbol table
-        if(new_line.HasLabel()) {
+        if (new_line.HasLabel()) {
           symbol_text = new_line.GetLabel();
           UpdateSymbolTable(pc_in_assembler_, symbol_text);
         }
@@ -181,7 +177,7 @@ void Assembler::PassTwo() {
             machine_code_lines_.push_back(machine_code);
             codelines_.at(i).SetMachineCode(machine_code);
           }
-        } else if (mnemonic == "HEX"){
+        } else if (mnemonic == "HEX") {
             cout << "I'M HERE!!!! AT " << i << endl;
             int hex = codelines_.at(i).GetHexObject().GetValue();
             cout << "HEX VALUE: " << hex << endl;
@@ -205,7 +201,7 @@ void Assembler::PassTwo() {
             codelines_.at(i).SetMachineCode(machine_code);
             machine_code_lines_.push_back(machine_code);
             int hex = codelines_.at(i).GetHexObject().GetValue();
-            for(int i = 0; i < hex; i++) {
+            for (int i = 0; i < hex; i++) {
               machine_code_lines_.push_back(kDummyCodeA);
             }
         } else {
@@ -214,13 +210,14 @@ void Assembler::PassTwo() {
           string addr = codelines_.at(i).GetAddr();
           if (addr == "indirect") {
           machine_code += "1";
-          } else if(addr == "direct") {
+          } else if (addr == "direct") {
             machine_code += "0";
           }
           // Last 12 bits
           string symbol_text = codelines_.at(i).GetSymOperand();
           int symbol_loc = symboltable_.at(symbol_text).GetLocation();
-          string symbol_bit_string = DABnamespace::DecToBitString(symbol_loc, 12);
+          string symbol_bit_string =
+          DABnamespace::DecToBitString(symbol_loc, 12);
           machine_code += symbol_bit_string;
           // Push onto vector
           machine_code_lines_.push_back(machine_code);
@@ -269,7 +266,24 @@ void Assembler::PrintMachineCode(string binary_filename,
   Utils::log_stream << "enter PrintMachineCode" << " "
                     << binary_filename << endl;
 #endif
-  string s = "";
+  // Convert the machine_code_lines_ vector to short integers
+  vector<int16_t> binary_input;
+  for (auto iter = machine_code_lines_.begin();
+            iter != machine_code_lines_.end(); ++iter) {
+    int16_t converted_string = DABnamespace::BitStringToDec(*iter);
+    binary_input.push_back(converted_string);
+  }
+  // Write the short integers to binary output file
+  char* buffer = new char[2];
+  std::ofstream output(binary_filename, std::ofstream::binary);
+  for (auto iter = binary_input.begin(); iter != binary_input.end(); ++iter) {
+    if (output) {
+      int16_t value = *iter;
+      buffer = reinterpret_cast<char*>(&value);
+      output.write(buffer, 2);
+    }
+  }
+  output.close();
 
 #ifdef EBUG
   Utils::log_stream << "leave PrintMachineCode" << endl;
@@ -326,14 +340,14 @@ void Assembler::UpdateSymbolTable(int pc, string symboltext) {
   Utils::log_stream << "enter UpdateSymbolTable" << endl;
 #endif
 Symbol new_symbol = Symbol(symboltext, pc);  // creating the new symbol
- // Checking to see if there is a duplicate symbol 
+// Checking to see if there is a duplicate symbol
 if (symboltable_.count(symboltext) == 0) {
-	symboltable_.insert( std::pair<string, Symbol>(symboltext, new_symbol));
+  symboltable_.insert(std::pair<string, Symbol>(symboltext, new_symbol));
   // found no duplicates
 } else {
-	// found a duplicate
+  // found a duplicate
   // find the duplicate in memory and add a comment
-  for(int i = 0; i < 4096; ++i) {
+  for (int i = 0; i < 4096; ++i) {
     if (codelines_.at(i).GetPC() == pc) {
        codelines_.at(i).SetErrorMessages("ERROR! DUPLICATE SYMBOL FOUND!");
     }
