@@ -47,16 +47,17 @@ void Assembler::Assemble(Scanner& in_scanner, string binary_filename,
   //////////////////////////////////////////////////////////////////////////
   // Pass one
   // Produce the symbol table and detect errors in symbols.
-  cout << "ENTERING PASS ONE" << endl;
   PassOne(in_scanner);
-  cout << "EXITING PASS ONE" << endl;
   //////////////////////////////////////////////////////////////////////////
   // Pass two
   // Generate the machine code.
   PassTwo();
   //////////////////////////////////////////////////////////////////////////
   // Dump the results.
-
+  //PrintSymbolTable();
+  for (int i = 0; i < machine_code_lines_.size(); ++i) {
+    cout << machine_code_lines_.at(i) << endl;
+  }
 #ifdef EBUG
   Utils::log_stream << "leave Assemble" << endl;
 #endif
@@ -123,16 +124,17 @@ void Assembler::PassOne(Scanner& in_scanner) {
   string assembly_code = "";  // a line of code from the source file
   string symbol_text = "";  // stores a label
   string nextLine = in_scanner.NextLine();
+  int i = 0;
   while(nextLine != "") {
     // Reading in the next line of code
     assembly_code = nextLine;
     CodeLine new_line = CodeLine(line_counter, pc_in_assembler_, assembly_code);
     ++line_counter;  // moving to the next line
     codelines_.push_back(new_line);  // adding the code line to program memory
-    cout << "ASSEMBLY: " << assembly_code << endl;
 
-      if (new_line.IsAllComment()) {
-      
+      if (new_line.IsAllComment() || 
+      codelines_.at(i).GetMnemonic() == "nullmnemonic") {
+
       } else {
         // Adding to the symbol table
         if(new_line.HasLabel()) {
@@ -142,8 +144,8 @@ void Assembler::PassOne(Scanner& in_scanner) {
         ++pc_in_assembler_;  // moving to the next location in memory
       }
     nextLine = in_scanner.NextLine();
+    i = i + 1;
   }
-PrintSymbolTable();
 #ifdef EBUG
   Utils::log_stream << "leave PassOne" << endl;
 #endif
@@ -157,37 +159,51 @@ void Assembler::PassTwo() {
 #ifdef EBUG
   Utils::log_stream << "enter PassTwo" << endl;
 #endif
-  cout << "Entering Second Pass" << endl; 
   for (int i = 0; i < codelines_.size(); i++) {
     string machine_code;
     if (codelines_.at(i).IsAllComment() == false) {
       // First 3 bits
-      cout << "CODELINE : " << codelines_.at(i).ToString() << endl;
       string mnemonic = codelines_.at(i).GetMnemonic();
       if (mnemonic != "nullmnemonic") {
-        cout << "MNEMONIC: " << mnemonic << endl;
         string mnemonic_opcode = opcodes_.at(mnemonic);
-        cout << "OPCODE FROM MAP: " << endl;
         // If opcode is RD/WRT/STP
         if (mnemonic_opcode == "111") {
           if (mnemonic == "RD ") {
             machine_code = "1110000000000001";
+            machine_code_lines_.push_back(machine_code);
+            codelines_.at(i).SetMachineCode(machine_code);
           } else if (mnemonic == "WRT") {
             machine_code = "1110000000000011";
+            machine_code_lines_.push_back(machine_code);
+            codelines_.at(i).SetMachineCode(machine_code);
           } else {
             machine_code = "1110000000000010";
+            machine_code_lines_.push_back(machine_code);
+            codelines_.at(i).SetMachineCode(machine_code);
           }
         } else if (mnemonic == "HEX"){
-          cout << "I'M IN tHE HEX IF STATEMENT" << endl;
+            cout << "I'M HERE!!!! AT " << i << endl;
             int hex = codelines_.at(i).GetHexObject().GetValue();
+            cout << "HEX VALUE: " << hex << endl;
             string bitstring_hex = DABnamespace::DecToBitString(hex, 16);
+            cout << "HEX BITSTRING: " << bitstring_hex << endl;
             machine_code = bitstring_hex;
             machine_code_lines_.push_back(machine_code);
+            codelines_.at(i).SetMachineCode(machine_code);
         } else if (mnemonic == "ORG") {
             SetNewPC(codelines_.at(i + 1));  // ORG the next line
+            machine_code = kDummyCodeA;
+            machine_code_lines_.push_back(machine_code);
+            codelines_.at(i).SetMachineCode(machine_code);
         } else if (mnemonic == "END") {
+            machine_code = kDummyCodeD;
+            machine_code_lines_.push_back(machine_code);
+            codelines_.at(i).SetMachineCode(machine_code);
             i = codelines_.size();
         } else if (mnemonic == "DS") {
+            machine_code = kDummyCodeC;
+            codelines_.at(i).SetMachineCode(machine_code);
+            machine_code_lines_.push_back(machine_code);
             int hex = codelines_.at(i).GetHexObject().GetValue();
             for(int i = 0; i < hex; i++) {
               machine_code_lines_.push_back(kDummyCodeA);
@@ -208,12 +224,11 @@ void Assembler::PassTwo() {
           machine_code += symbol_bit_string;
           // Push onto vector
           machine_code_lines_.push_back(machine_code);
-          cout << machine_code << endl;
+          codelines_.at(i).SetMachineCode(machine_code);
         }
       }
     }
   }
-  cout << "EXITING SECOND PASS" << endl;
 #ifdef EBUG
   Utils::log_stream << "leave PassTwo" << endl;
 #endif
@@ -316,9 +331,13 @@ if (symboltable_.count(symboltext) == 0) {
 	symboltable_.insert( std::pair<string, Symbol>(symboltext, new_symbol));
   // found no duplicates
 } else {
-	// found a duplicate, so store the pc to keep track of when the duplicate
-	// appeared during execution
-	duplicates_.push_back(pc);
+	// found a duplicate
+  // find the duplicate in memory and add a comment
+  for(int i = 0; i < 4096; ++i) {
+    if (codelines_.at(i).GetPC() == pc) {
+       codelines_.at(i).SetErrorMessages("ERROR! DUPLICATE SYMBOL FOUND!");
+    }
+  }
 }
 #ifdef EBUG
   Utils::log_stream << "leave UpdateSymbolTable" << endl;

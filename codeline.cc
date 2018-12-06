@@ -17,7 +17,6 @@ CodeLine::CodeLine() {
  * Constructor
 **/
 CodeLine::CodeLine(int linecounter, int pc, string assemblycode) {
-  cout << "IN CODELINE CONSTRUCTOR: " << assemblycode << endl;
  // First check to see whether the code is all comment or instruction
   string comment_indicator = assemblycode.substr(0, 1);
   if (comment_indicator.compare("*") == 0 || assemblycode.size() == 1) {
@@ -31,7 +30,7 @@ CodeLine::CodeLine(int linecounter, int pc, string assemblycode) {
      if (assemblycode.length() > 7) {
       std::string addr = assemblycode.substr(8, 1);
       std::string symoperand = assemblycode.substr(10, 3);
-      std::string hexoperand = assemblycode.substr(14, 4);
+      std::string hexoperand = assemblycode.substr(14, 5);
       // The comment substring should run from the begining of the comment at
       // spot 20 until it ends. Thus the length of the whole line minus 19
       // gives the value of spaces remaining from the 20th position.
@@ -109,6 +108,12 @@ string CodeLine::GetMnemonic() const {
   return mnemonic_;
 }
 
+/***************************************************************************
+ * Accessor for the 'pc_'
+**/
+int CodeLine::GetPC() const {
+  return pc_;
+}
 /***************************************************************************
  * Accessor for the 'symoperand_'.
 **/
@@ -202,7 +207,7 @@ void CodeLine::SetCommentsOnly(int linecounter, string line) {
   mnemonic_ = "nullmnemonic";
   addr_ = "nulladdr_";
   symoperand_ = "nullsymoperand";
-  hex_ = Hex("");
+  hex_ = Hex("     ");
   code_ = "nullcode";
 }
 
@@ -256,9 +261,22 @@ string CodeLine::ToString() const {
 
 
   s += Utils::Format(linecounter_, 5) + " ";
+  if ( pc_ < 0 ) {
+    s += Utils::Format("    ", 5) + " ";
+    s += Utils::Format(" " , 12) + " ";
+  } else {
+    s += Utils::Format(pc_, 4) + "  ";
+    s += DABnamespace::DecToBitString(pc_, 12) + " ";
+  }
 
-  s += Utils::Format(pc_, 4) + "  ";
-  s += DABnamespace::DecToBitString(pc_, 12) + " ";
+  if (code_ == "nullcode") {
+    s += Utils::Format("xxxx xxxx xxxx xxxx", 19);
+  } else {
+    s = s + Utils::Format((code_).substr(0 ,4), 4)
+          + " " + Utils::Format((code_).substr(4 ,4), 4)
+          + " " + Utils::Format((code_).substr(8 ,4), 4)
+          + " " + Utils::Format((code_).substr(12 ,4), 4);
+  }
 
   if (label_ == "nulllabel") {
     s += " " + Utils::Format("...", 3);
@@ -284,7 +302,7 @@ string CodeLine::ToString() const {
     s += " " + Utils::Format(symoperand_, 3);
   }
 
-  if (hex_.IsNotNull()) {
+  if (hex_.IsNull()) {
     s += " " + Utils::Format(".....", 5);
   } else {
     s += " " + hex_.ToString();

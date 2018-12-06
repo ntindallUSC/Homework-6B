@@ -55,7 +55,6 @@ class Assembler {
   int maxpc_;
   vector<CodeLine> codelines_;
   vector<string> machine_code_lines_;
-  vector<int> duplicates_;
   map<int, string> machinecode_;
   map<string, Symbol> symboltable_;
   map<string, string> opcodes_ = { {"BAN", "000"},
@@ -67,7 +66,11 @@ class Assembler {
                                    {"BR ", "110"},
                                    {"STP", "111"},
                                    {"RD ", "111"},
-                                   {"WRT", "111"}
+                                   {"WRT", "111"},
+                                   {"HEX", "HEX"},
+                                   {"ORG", "ORG"},
+                                   {"END", "END"},
+                                   {"DS ", "DS "}
                                  };
   set<string> mnemonics_;
 
